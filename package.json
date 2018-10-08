@@ -1,0 +1,27 @@
+{
+  "name": "event-schema",
+  "version": "0.0.1",
+  "description": "A simple library for defining event schemas, validating published events, and subscribing to events.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npm test"
+  },
+  "keywords": [
+    "event",
+    "subscribe",
+    "publish",
+    "schema"
+  ],
+  "author": "James Speirs <james.speirs@gmail.com>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "ajv": "^6.5.4"
+  }
+}
