@@ -1,6 +1,6 @@
 {
   "name": "event-schema",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A simple library for defining event schemas, validating published events, and subscribing to events.",
   "main": "index.js",
   "directories": {
