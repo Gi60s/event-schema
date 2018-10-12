@@ -80,4 +80,21 @@ describe('event-schema', () => {
     expect(called).to.equal(true)
   })
 
+  it('can listen only once', () => {
+    es.define('x', {
+      type: 'string',
+      maxLength: 5
+    })
+
+    let called = 0
+    es.once('x', function (payload) {
+      called++
+    })
+
+    es.emit('x', 'hello')
+    es.emit('x', 'hello')
+
+    expect(called).to.equal(1)
+  })
+
 })
