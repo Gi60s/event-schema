@@ -4,46 +4,71 @@ const Ajv = require('ajv')
 const ajv = new Ajv()
 const map = new WeakMap()
 
-function EventSpec() {
-  if (!(this instanceof EventSpec)) return new EventSpec()
+module.exports = EventSchema
+
+function EventSchema() {
+  if (!(this instanceof EventSchema)) return new EventSchema()
   map.set(this, {
     topics: {},
     handlers: {}
   })
 }
 
-EventSpec.prototype.define = function (topic, schema) {
+EventSchema.prototype.define = function (topic, schema) {
   const topics = map.get(this).topics
   if (topics[topic]) throw Error('Topic already defined: ' + name)
-  if (typeof schema === 'boolean') {
-    topics[topic] = schema
-  } else if (schema && typeof schema === 'object') {
+  if (schema && typeof schema === 'object') {
     topics[topic] = ajv.compile(schema)
   } else {
-    throw Error('Invalid schema supplied. Must be true, false, or a non-null object. Received: ' + schema)
+    throw Error('Invalid schema supplied. Must be a non-null object. Received: ' + schema)
   }
 }
 
-EventSpec.prototype.publish = function (topic, payload) {
+EventSchema.prototype.emit = function (topic, payload) {
   const data = map.get(this)
   const handlers = data.handlers
   const topics = data.topics
 
-  // validate that the topic exists
-  const schema = topics[topic]
-  if (!schema) throw Error('Topic not defined: ' + topic)
+  // get the validator
+  const validate = topics[topic]
+  if (!validate) throw Error('Topic not defined: ' + topic)
 
   // validate the payload against the schema
-  if (!schema.validate(payload)) throw Error(schema.errors)
+  if (!validate(payload)) {
+    let message = 'Invalid schema '
+    const multiple = validate.errors.length > 1
+    validate.errors.forEach(error => {
+      if (multiple) message += '\n  '
+      message += 'at ' + error.schemaPath + ': ' + error.message
+    })
+    throw Error(message)
+  }
 
   // execute the subscribed handlers
-  if (handlers[topic]) handlers[topic].forEach(handler => handler(event))
+  if (handlers[topic]) handlers[topic].forEach(handler => handler(payload))
 }
 
-EventSpec.prototype.subscribe = function (topic, handler) {
+EventSchema.prototype.off = function (topic, handler) {
+  const handlers = map.get(this).handlers
+  if (handlers[topic]) {
+    const index = handlers[topic].indexOf(handler)
+    if (index !== -1) handlers[topic].splice(index, 1)
+  }
+}
+
+EventSchema.prototype.on = function (topic, handler) {
   const handlers = map.get(this).handlers
   if (!handlers[topic]) handlers[topic] = []
   if (!handlers[topic].includes(handler)) {
     handlers[topic].push(handler)
   }
+}
+
+EventSchema.prototype.once = function (topic, handler) {
+  const eventSchema = this
+  function proxy(payload) {
+    eventSchema.off(topic, proxy)
+    handler(payload)
+  }
+  this.on(topic, proxy)
 }
